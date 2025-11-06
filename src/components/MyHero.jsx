@@ -21,13 +21,13 @@ export default function MyHero() {
           className="rounded-md"
         ></Image>
         <p className="text-cener md:text-left">
-          Alex is an aspiring full-stack developer currently learning how to
+          Ben is an aspiring full-stack developer currently learning how to
           build modern web applications with Next.js. Passionate about coding
           and problem-solving, he’s exploring how frontend and backend
           technologies come together to create seamless user experiences.
-          Through his full-stack course, Alex is gaining hands-on experience
-          with React, APIs, and database integration — building the foundation
-          for a future in web development.
+          Through his full-stack course, Ben is gaining hands-on experience with
+          React, APIs, and database integration — building the foundation for a
+          future in web development.
         </p>
       </CardContent>
     </Card>
