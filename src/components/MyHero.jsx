@@ -20,7 +20,7 @@ export default function MyHero() {
           height={300}
           className="rounded-md"
         ></Image>
-        <p className="text-cener md:text-left">
+        <p className="text-center md:text-left">
           Ben is an aspiring full-stack developer currently learning how to
           build modern web applications with Next.js. Passionate about coding
           and problem-solving, he’s exploring how frontend and backend
