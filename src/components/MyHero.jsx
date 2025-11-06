@@ -12,14 +12,15 @@ import Image from "next/image";
 export default function MyHero() {
   return (
     <Card className="h-max m-3">
-      <CardContent className="flex items-center justify-start">
+      <CardContent className="flex items-center justify-start flex-col md:flex-row gap-4">
         <Image
           src="/profile_image.png"
           alt="Profile image"
           width={300}
           height={300}
+          className="rounded-md"
         ></Image>
-        <p>
+        <p className="text-cener md:text-left">
           Alex is an aspiring full-stack developer currently learning how to
           build modern web applications with Next.js. Passionate about coding
           and problem-solving, he’s exploring how frontend and backend
