@@ -2,28 +2,10 @@ import Link from "next/link";
 import { Card, CardContent, CardFooter, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
-const projects = [
-  {
-    title: "Project One",
-    desc: "This is project 1",
-    img: "https://placehold.co/300.png",
-    link: "#",
-  },
-  {
-    title: "Project Two",
-    desc: "This is project 2",
-    img: "https://placehold.co/300.png",
-    link: "#",
-  },
-  {
-    title: "Project Three",
-    desc: "This is project 3",
-    img: "https://placehold.co/300.png",
-    link: "#",
-  },
-];
+export default async function ProjectPreviewCard({ count = 3 }) {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/projects`);
+  const { projects } = await res.json();
 
-export default function ProjectPreviewCard({ count = 3 }) {
   return (
     <div className="flex flex-row w-full justify-center flex-wrap items-center">
       {projects.slice(0, count).map((project, index) => (

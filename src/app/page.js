@@ -5,7 +5,6 @@ import ProjectPreviewCard from "@/components/ProjectPreviewCard";
 export default function Home() {
   return (
     <>
-      <MyNavBar />
       <MyHero />
       <ProjectPreviewCard count={3} />
     </>
