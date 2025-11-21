@@ -4,6 +4,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useState } from "react";
+import { toast } from "sonner";
 import {
   Form,
   FormControl,
@@ -44,7 +45,7 @@ export default function NewPage() {
     },
   });
 
-  function onSubmit(values) {
+  async function onSubmit(values) {
     const formData = new FormData();
     formData.append("title", values.title);
     formData.append("description", values.description);
@@ -52,12 +53,23 @@ export default function NewPage() {
     formData.append("link", values.link);
     formData.append("keywords", JSON.stringify(values.keywords || []));
 
-    fetch("/api/projects/new", {
-      method: "POST",
-      body: formData,
-    }).catch((error) => {
-      console.error("Error");
-    });
+    try {
+      const response = await fetch("/api/projects/new", {
+        method: "POST",
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (result.ok) {
+        toast.success("Project received successfully");
+      } else {
+        toast.error("Failed to create project. Try again.");
+      }
+    } catch (error) {
+      console.error("Error", error);
+      toast.error("Failed to create project. Try again.");
+    }
 
     // TODO: in future we will write the data to DB
   }

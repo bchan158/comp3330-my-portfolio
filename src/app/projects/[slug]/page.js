@@ -2,6 +2,7 @@ import { createSlug } from "@/lib/utils";
 import { Image } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 
 export default async function ProjectDetailPage({ params }) {
   const { slug } = await params;
@@ -11,6 +12,10 @@ export default async function ProjectDetailPage({ params }) {
   const foundProject = data.projects.find(
     (proj) => createSlug(proj.title) === slug
   );
+
+  if (!foundProject) {
+    notFound();
+  }
 
   return (
     <div className="flex flex-col justify-center items-center">
