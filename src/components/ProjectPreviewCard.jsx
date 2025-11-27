@@ -4,7 +4,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default async function ProjectPreviewCard({ count = 3 }) {
   const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/projects`);
-  const { projects } = await res.json();
+  const response = await res.json();
+  const projects = response.data || response.projects || [];
 
   return (
     <div className="flex flex-row w-full justify-center flex-wrap items-center">

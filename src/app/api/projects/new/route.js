@@ -1,34 +1,64 @@
-export async function POST(req) {
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { auth0 } from "@/lib/auth0";
+import { insertProject } from "@/lib/db";
+
+const projectSchema = z.object({
+  title: z.string().min(1),
+  description: z.string().min(1),
+  image: z.string().url(),
+  link: z.string().url(),
+  keywords: z.array(z.string()).optional().default([]),
+});
+
+export async function POST(request) {
   try {
-    const formData = await req.formData();
-    const title = formData.get("title");
-    const description = formData.get("descriopton");
-    const img = formData.get("img");
-    const link = formData.get("link");
-    const keywords = formData.getAll("keywords");
+    await auth0.requireSession();
 
-    console.log("Received new project data:", {
-      title,
-      description,
-      img,
-      link,
-      keywords,
-    });
+    // Try to parse as JSON first, fallback to FormData
+    let body;
+    const contentType = request.headers.get("content-type");
+    
+    if (contentType?.includes("application/json")) {
+      body = await request.json();
+    } else {
+      const formData = await request.formData();
+      const keywordsFromForm = formData.getAll("keywords[]");
+      body = {
+        title: formData.get("title") ?? "",
+        description: formData.get("description") ?? "",
+        image: formData.get("image") ?? formData.get("img") ?? "",
+        link: formData.get("link") ?? "",
+        keywords: keywordsFromForm.length > 0 
+          ? keywordsFromForm 
+          : (formData.get("keywords") ? [formData.get("keywords")] : []),
+      };
+    }
 
-    // FUTURE CONCERNS - you can ignore them now
-    // TODO: (recommended) validate here again with Zod
-    // TODO: persist to DB (Prisma/Drizzle/etc.)
-    // TODO: revalidatePath("/projects") after write (if using Next cache)
-
-    return Response.json(
-      { ok: true, project: { title, description, img, link, keywords } },
+    const payload = projectSchema.parse(body);
+    const project = await insertProject(payload);
+    
+    return NextResponse.json(
+      { message: "Project created", data: project },
       { status: 201 }
     );
-  } catch (err) {
-    console.error(err);
-    return Response.json(
-      { ok: false, error: "Invalid payload" },
-      { status: 400 }
+  } catch (error) {
+    if (error.message === "Unauthorized") {
+      return NextResponse.json(
+        { message: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { message: "Invalid payload", errors: error.errors },
+        { status: 400 }
+      );
+    }
+    console.error(error);
+    return NextResponse.json(
+      { message: "Internal server error" },
+      { status: 500 }
     );
   }
 }
