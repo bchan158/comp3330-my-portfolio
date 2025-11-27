@@ -52,7 +52,7 @@ export async function POST(request) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { message: "Invalid payload", errors: error.errors },
-        { status: 400 }
+      { status: 400 }
       );
     }
     console.error(error);

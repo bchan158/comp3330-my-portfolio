@@ -8,7 +8,7 @@ function mapProject(row) {
     id: row.id,
     title: row.title,
     description: row.description,
-    image: row.img, // Map db column 'img' to API field 'image'
+    image: row.image,
     link: row.link,
     keywords: row.keywords ?? [],
     createdAt: row.created_at,
@@ -34,10 +34,8 @@ export async function ensureProjectsTable() {
 export async function seedProjectsTable(seed) {
   for (const item of seed) {
     await sql`
-      insert into projects (title, description, img, link, keywords)
-      values (${item.title}, ${item.description}, ${item.image || item.img}, ${
-      item.link
-    }, ${item.keywords})
+      insert into projects (title, description, image, link, keywords)
+      values (${item.title}, ${item.description}, ${item.image}, ${item.link}, ${item.keywords})
       on conflict do nothing;
     `;
   }
@@ -55,10 +53,8 @@ export async function getProjectById(id) {
 
 export async function insertProject(data) {
   const [row] = await sql`
-    insert into projects (title, description, img, link, keywords)
-    values (${data.title}, ${data.description}, ${data.image || data.img}, ${
-    data.link
-  }, ${data.keywords || []})
+    insert into projects (title, description, image, link, keywords)
+    values (${data.title}, ${data.description}, ${data.image}, ${data.link}, ${data.keywords})
     returning *;
   `;
   return mapProject(row);
@@ -69,7 +65,7 @@ export async function updateProject(id, updates) {
     update projects
     set title = coalesce(${updates.title}, title),
         description = coalesce(${updates.description}, description),
-        img = coalesce(${updates.image || updates.img}, img),
+        image = coalesce(${updates.image}, image),
         link = coalesce(${updates.link}, link),
         keywords = coalesce(${updates.keywords}, keywords),
         updated_at = now()

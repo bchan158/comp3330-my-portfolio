@@ -4,10 +4,22 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createSlug } from "@/lib/utils";
+import { fetchProjects } from "@/lib/db";
 
 export default async function AllPojects() {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/projects`);
-  const { projects } = await res.json();
+  try {
+    const projects = await fetchProjects();
+
+    if (!projects || !Array.isArray(projects) || projects.length === 0) {
+      return (
+        <div className="flex flex-col flex-wrap w-full items-center justify-center bg-stone-50 font-sans dark:bg-black my-4 p-8">
+          <p className="text-stone-700 dark:text-stone-300 text-lg">No projects found.</p>
+          <p className="text-sm text-stone-500 dark:text-stone-400 mt-2">
+            Check the server console for database query details.
+          </p>
+        </div>
+      );
+    }
 
   return (
     <div className="flex flex-col flex-wrap w-full items-center justify-center bg-stone-50 font-sans dark:bg-black my-4">
@@ -51,4 +63,13 @@ export default async function AllPojects() {
       })}
     </div>
   );
+  } catch (error) {
+    console.error('Error fetching projects:', error);
+    return (
+      <div className="flex flex-col flex-wrap w-full items-center justify-center bg-stone-50 font-sans dark:bg-black my-4">
+        <p className="text-stone-700 dark:text-stone-300">Error loading projects. Please try again later.</p>
+        <p className="text-sm text-stone-500 dark:text-stone-400 mt-2">{error.message}</p>
+      </div>
+    );
+  }
 }
