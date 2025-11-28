@@ -1,12 +1,11 @@
 "use client";
-
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
-import { createSlug } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -17,76 +16,73 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+import { createSlug } from "@/lib/utils";
 
-const newProjectSchema = z.object({
-  title: z.string().min(2, { message: "Your title is too short" }).max(200),
-  description: z
-    .string()
-    .min(10, { message: "Your description is too short" })
-    .max(1000),
-  img: z.string().url({ message: "Please enter a valid URL for the image" }),
-  link: z
-    .string()
-    .url({ message: "Please enter a valid URL for the project link" }),
+const editProjectSchema = z.object({
+  title: z.string().min(2, { message: "Title is too short" }).max(200),
+  description: z.string().min(10, { message: "Description is too short" }).max(1000),
+  image: z.string().url({ message: "Image must be a valid URL" }),
+  link: z.string().url({ message: "Link must be a valid URL" }),
   keywords: z.array(z.string()).optional(),
 });
 
-export default function NewPage() {
+export default function EditProjectForm({ project, projectId, slug }) {
   const [draftKeyword, setDraftKeyword] = useState("");
+  const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
   const form = useForm({
-    resolver: zodResolver(newProjectSchema),
+    resolver: zodResolver(editProjectSchema),
     defaultValues: {
-      title: "Write your project title here...",
-      description: "Write your project description here...",
-      img: "https://placehold.co/300.png",
-      link: "https://your-project-link.com",
-      keywords: [],
+      title: project.title || "",
+      description: project.description || "",
+      image: project.image || "",
+      link: project.link || "",
+      keywords: Array.isArray(project.keywords) ? project.keywords : [],
     },
   });
 
-  async function onSubmit(values) {
-    const formData = new FormData();
-    formData.append("title", values.title);
-    formData.append("description", values.description);
-    formData.append("img", values.img);
-    formData.append("link", values.link);
-    formData.append("keywords", JSON.stringify(values.keywords || []));
+  function onSubmit(values) {
+    startTransition(async () => {
+      try {
+        const res = await fetch(`/api/projects/${projectId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            title: values.title,
+            description: values.description,
+            image: values.image,
+            link: values.link,
+            keywords: values.keywords || [],
+          }),
+        });
 
-    try {
-      const response = await fetch("/api/projects/new", {
-        method: "POST",
-        body: formData,
-      });
+        const data = await res.json();
 
-      const result = await response.json();
-
-      if (response.ok) {
-        toast.success("Project created successfully!");
-        // Redirect to the new project page
-        if (result.data) {
-          const slug = createSlug(result.data.title);
-          router.push(`/projects/${slug}`);
-          router.refresh();
-        } else {
-          router.push("/projects");
-          router.refresh();
+        if (!res.ok) {
+          toast.error(data.message || "Failed to update project");
+          return;
         }
-      } else {
-        toast.error(result.message || "Failed to create project. Try again.");
+
+        toast.success("Project updated successfully!");
+        // Use the updated title to create a new slug, or fall back to the provided slug
+        const updatedSlug = values.title ? createSlug(values.title) : slug;
+        router.push(`/projects/${updatedSlug}`);
+        router.refresh();
+      } catch (error) {
+        console.error("Error:", error);
+        toast.error("An error occurred while updating the project");
       }
-    } catch (error) {
-      console.error("Error", error);
-      toast.error("Failed to create project. Try again.");
-    }
+    });
   }
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2 m-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 m-4 max-w-2xl">
         <FormField
           control={form.control}
           name="title"
@@ -94,11 +90,9 @@ export default function NewPage() {
             <FormItem>
               <FormLabel>Title</FormLabel>
               <FormControl>
-                <Input placeholder="A title of your project" {...field} />
+                <Input placeholder="Project title" {...field} />
               </FormControl>
-              <FormDescription>
-                This is the title of your project.
-              </FormDescription>
+              <FormDescription>This is the title of your project.</FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -110,33 +104,27 @@ export default function NewPage() {
             <FormItem>
               <FormLabel>Description</FormLabel>
               <FormControl>
-                <Input
+                <Textarea
                   placeholder="A brief description of your project"
+                  className="min-h-[100px]"
                   {...field}
                 />
               </FormControl>
-              <FormDescription>
-                This is a brief description of your project.
-              </FormDescription>
+              <FormDescription>This is a brief description of your project.</FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
         <FormField
           control={form.control}
-          name="img"
+          name="image"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Image URL</FormLabel>
               <FormControl>
-                <Input
-                  placeholder="https://your-image-link.com/image.png"
-                  {...field}
-                />
+                <Input placeholder="https://your-image-link.com/image.png" {...field} />
               </FormControl>
-              <FormDescription>
-                This is the image URL of your project.
-              </FormDescription>
+              <FormDescription>This is the image URL of your project.</FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -150,9 +138,7 @@ export default function NewPage() {
               <FormControl>
                 <Input placeholder="https://your-project-link.com" {...field} />
               </FormControl>
-              <FormDescription>
-                This is the link to your project.
-              </FormDescription>
+              <FormDescription>This is the link to your project.</FormDescription>
               <FormMessage />
             </FormItem>
           )}
@@ -183,8 +169,9 @@ export default function NewPage() {
                 handleAddKeyword();
               }
             };
+
             return (
-              <FormItem className="flex">
+              <FormItem className="flex flex-col">
                 <div className="flex flex-col gap-2 flex-1">
                   <FormLabel>Keywords</FormLabel>
                   <FormControl>
@@ -200,11 +187,9 @@ export default function NewPage() {
                       </Button>
                     </div>
                   </FormControl>
-                  <FormDescription>
-                    Tag your project so it is easier to filter later.
-                  </FormDescription>
+                  <FormDescription>Tag your project so it is easier to filter later.</FormDescription>
                 </div>
-                <div className="flex flex-1 flex-wrap gap-2 pt-6">
+                <div className="flex flex-1 flex-wrap gap-2 pt-2">
                   {currentKeywords.map((keyword) => (
                     <Badge
                       key={keyword}
@@ -214,7 +199,7 @@ export default function NewPage() {
                       {keyword}
                       <button
                         type="button"
-                        className="ml-1 text-xs"
+                        className="ml-1 text-xs hover:text-red-400"
                         onClick={() => handleRemoveKeyword(keyword)}
                         aria-label={`Remove ${keyword}`}
                       >
@@ -228,10 +213,22 @@ export default function NewPage() {
             );
           }}
         />
-        <Button type="submit" className="mt-2">
-          Submit
-        </Button>
+        <div className="flex gap-2">
+          <Button type="submit" disabled={isPending} className="mt-2">
+            {isPending ? "Saving…" : "Save Changes"}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={isPending}
+            onClick={() => router.back()}
+            className="mt-2"
+          >
+            Cancel
+          </Button>
+        </div>
       </form>
     </Form>
   );
 }
+

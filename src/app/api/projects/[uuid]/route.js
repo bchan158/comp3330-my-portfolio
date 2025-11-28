@@ -48,9 +48,9 @@ export async function PUT(request, { params }) {
         { status: 400 }
       );
     }
-    console.error(error);
+    console.error("Update project error:", error);
     return NextResponse.json(
-      { message: "Internal server error" },
+      { message: "Internal server error", error: error.message },
       { status: 500 }
     );
   }
@@ -75,9 +75,9 @@ export async function DELETE(request, { params }) {
         { status: 401 }
       );
     }
-    console.error(error);
+    console.error("Delete project error:", error);
     return NextResponse.json(
-      { message: "Internal server error" },
+      { message: "Internal server error", error: error.message },
       { status: 500 }
     );
   }

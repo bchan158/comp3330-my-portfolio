@@ -24,14 +24,25 @@ export async function POST(request) {
     } else {
       const formData = await request.formData();
       const keywordsFromForm = formData.getAll("keywords[]");
+      const keywordsString = formData.get("keywords");
+      
+      let keywords = [];
+      if (keywordsFromForm.length > 0) {
+        keywords = Array.from(keywordsFromForm);
+      } else if (keywordsString) {
+        try {
+          keywords = JSON.parse(keywordsString);
+        } catch {
+          keywords = [];
+        }
+      }
+      
       body = {
         title: formData.get("title") ?? "",
         description: formData.get("description") ?? "",
         image: formData.get("image") ?? formData.get("img") ?? "",
         link: formData.get("link") ?? "",
-        keywords: keywordsFromForm.length > 0 
-          ? keywordsFromForm 
-          : (formData.get("keywords") ? [formData.get("keywords")] : []),
+        keywords: keywords,
       };
     }
 

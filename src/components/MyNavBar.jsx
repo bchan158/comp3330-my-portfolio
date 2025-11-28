@@ -9,8 +9,12 @@ import {
   NavigationMenuViewport,
 } from "@/components/ui/navigation-menu";
 import Link from "next/link";
+import { auth0 } from "@/lib/auth0";
 
-export default function MyNavBar() {
+export default async function MyNavBar() {
+  const session = await auth0.getSession();
+  const user = session?.user;
+
   return (
     <div className="z-50 w-full sticky top-0 p-2 flex items-center justify-center bg-stone-50 font-sans dark:bg-black">
       <NavigationMenu viewport={false}>
@@ -40,7 +44,11 @@ export default function MyNavBar() {
           </NavigationMenuItem>
           <NavigationMenuItem>
             <NavigationMenuLink asChild>
-              <Link href="/login">Login</Link>
+              {user ? (
+                <Link href="/api/auth/logout">Log Out</Link>
+              ) : (
+                <Link href="/api/auth/login">Log In</Link>
+              )}
             </NavigationMenuLink>
           </NavigationMenuItem>
         </NavigationMenuList>

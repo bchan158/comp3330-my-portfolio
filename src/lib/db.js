@@ -8,7 +8,7 @@ function mapProject(row) {
     id: row.id,
     title: row.title,
     description: row.description,
-    image: row.image,
+    image: row.img || row.image, // Support both img and image for compatibility
     link: row.link,
     keywords: row.keywords ?? [],
     createdAt: row.created_at,
@@ -34,8 +34,10 @@ export async function ensureProjectsTable() {
 export async function seedProjectsTable(seed) {
   for (const item of seed) {
     await sql`
-      insert into projects (title, description, image, link, keywords)
-      values (${item.title}, ${item.description}, ${item.image}, ${item.link}, ${item.keywords})
+      insert into projects (title, description, img, link, keywords)
+      values (${item.title}, ${item.description}, ${item.image || item.img}, ${
+      item.link
+    }, ${item.keywords})
       on conflict do nothing;
     `;
   }
@@ -52,26 +54,54 @@ export async function getProjectById(id) {
 }
 
 export async function insertProject(data) {
+  // Generate UUID for new project using PostgreSQL's gen_random_uuid()
   const [row] = await sql`
-    insert into projects (title, description, image, link, keywords)
-    values (${data.title}, ${data.description}, ${data.image}, ${data.link}, ${data.keywords})
+    insert into projects (id, title, description, img, link, keywords)
+    values (gen_random_uuid(), ${data.title}, ${data.description}, ${
+    data.image || data.img
+  }, ${data.link}, ${JSON.stringify(data.keywords || [])}::jsonb)
     returning *;
   `;
   return mapProject(row);
 }
 
 export async function updateProject(id, updates) {
-  const [row] = await sql`
-    update projects
-    set title = coalesce(${updates.title}, title),
-        description = coalesce(${updates.description}, description),
-        image = coalesce(${updates.image}, image),
-        link = coalesce(${updates.link}, link),
-        keywords = coalesce(${updates.keywords}, keywords),
+  // Prepare update values, using existing values for fields that aren't provided
+  const imageValue = updates.image || updates.img;
+
+  // Build the update query conditionally
+  let row;
+
+  if (updates.keywords !== undefined) {
+    // If keywords are provided, update them
+    const keywordsJson = JSON.stringify(updates.keywords);
+    [row] = await sql`
+      update projects
+      set 
+        title = coalesce(${updates.title ?? null}, title),
+        description = coalesce(${updates.description ?? null}, description),
+        img = coalesce(${imageValue ?? null}, img),
+        link = coalesce(${updates.link ?? null}, link),
+        keywords = ${keywordsJson}::jsonb,
         updated_at = now()
-    where id = ${id}
-    returning *;
-  `;
+      where id = ${id}::uuid
+      returning *;
+    `;
+  } else {
+    // If keywords are not provided, don't update them
+    [row] = await sql`
+      update projects
+      set 
+        title = coalesce(${updates.title ?? null}, title),
+        description = coalesce(${updates.description ?? null}, description),
+        img = coalesce(${imageValue ?? null}, img),
+        link = coalesce(${updates.link ?? null}, link),
+        updated_at = now()
+      where id = ${id}::uuid
+      returning *;
+    `;
+  }
+
   return row ? mapProject(row) : null;
 }
 

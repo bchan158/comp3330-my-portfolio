@@ -5,9 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { createSlug } from "@/lib/utils";
 import { fetchProjects } from "@/lib/db";
+import { auth0 } from "@/lib/auth0";
+import EditProjectButton from "@/components/EditProjectButton";
+import DeleteProjectButton from "@/components/DeleteProjectButton";
 
 export default async function AllPojects() {
   try {
+    const session = await auth0.getSession();
+    const user = session?.user;
     const projects = await fetchProjects();
 
     if (!projects || !Array.isArray(projects) || projects.length === 0) {
@@ -48,15 +53,23 @@ export default async function AllPojects() {
               <p className="px-2 leading-relaxed h-12 text-sm text-stone">
                 {project.link}
               </p>
-              <Button variant="outline" className="m-2">
-                <Link
-                  href={`/projects/${createSlug(project.title)}`}
-                  target="_blank"
-                  rel="noopen"
-                >
-                  View Project
-                </Link>
-              </Button>
+              <div className="flex gap-2 m-2">
+                <Button variant="outline">
+                  <Link
+                    href={`/projects/${createSlug(project.title)}`}
+                    target="_blank"
+                    rel="noopen"
+                  >
+                    View Project
+                  </Link>
+                </Button>
+                {user && (
+                  <>
+                    <EditProjectButton projectId={project.id} slug={createSlug(project.title)} />
+                    <DeleteProjectButton projectId={project.id} />
+                  </>
+                )}
+              </div>
             </div>
           </Card>
         );
