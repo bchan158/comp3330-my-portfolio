@@ -18,7 +18,9 @@ export default async function AllPojects() {
     if (!projects || !Array.isArray(projects) || projects.length === 0) {
       return (
         <div className="flex flex-col flex-wrap w-full items-center justify-center bg-stone-50 font-sans dark:bg-black my-4 p-8">
-          <p className="text-stone-700 dark:text-stone-300 text-lg">No projects found.</p>
+          <p className="text-stone-700 dark:text-stone-300 text-lg">
+            No projects found.
+          </p>
           <p className="text-sm text-stone-500 dark:text-stone-400 mt-2">
             Check the server console for database query details.
           </p>
@@ -26,62 +28,69 @@ export default async function AllPojects() {
       );
     }
 
-  return (
-    <div className="flex flex-col flex-wrap w-full items-center justify-center bg-stone-50 font-sans dark:bg-black my-4">
-      {projects.map((project, index) => {
-        const slug = createSlug(project.title);
-        return (
-          <Card
-            key={index}
-            className="flex flex-row flex-1 m-4 p-4 gap-2 hover:scale-105 transition-transform bg-stone-700"
-          >
-            {project.img ? (
-              <Image
-                width={300}
-                height={300}
-                src={project.img}
-                alt={project.title}
-                className="h-[300px] w-[300px] object-contain"
-              />
-            ) : (
-              <Skeleton className="h-[300px] w-[300] rounded self-center" />
-            )}
-            <div className="flex flex-col justify-between">
-              <h3 className="px-2 text-lg font-bold text-stone-50">
-                {project.title}
-              </h3>
-              <p className="px-2 leading-relaxed h-12 text-sm text-stone">
-                {project.link}
-              </p>
-              <div className="flex gap-2 m-2">
-                <Button variant="outline">
-                  <Link
-                    href={`/projects/${createSlug(project.title)}`}
-                    target="_blank"
-                    rel="noopen"
-                  >
-                    View Project
-                  </Link>
-                </Button>
-                {user && (
-                  <>
-                    <EditProjectButton projectId={project.id} slug={createSlug(project.title)} />
-                    <DeleteProjectButton projectId={project.id} />
-                  </>
-                )}
-              </div>
-            </div>
-          </Card>
-        );
-      })}
-    </div>
-  );
-  } catch (error) {
-    console.error('Error fetching projects:', error);
     return (
       <div className="flex flex-col flex-wrap w-full items-center justify-center bg-stone-50 font-sans dark:bg-black my-4">
-        <p className="text-stone-700 dark:text-stone-300">Error loading projects. Please try again later.</p>
-        <p className="text-sm text-stone-500 dark:text-stone-400 mt-2">{error.message}</p>
+        {projects.map((project, index) => {
+          const slug = createSlug(project.title);
+          return (
+            <Card
+              key={index}
+              className="flex flex-row flex-1 m-4 p-4 gap-2 hover:scale-105 transition-transform bg-stone-700"
+            >
+              {project.img ? (
+                <Image
+                  width={300}
+                  height={300}
+                  src={project.img}
+                  alt={project.title}
+                  className="h-[300px] w-[300px] object-contain"
+                />
+              ) : (
+                <Skeleton className="h-[300px] w-[300] rounded self-center" />
+              )}
+              <div className="flex flex-col justify-between">
+                <h3 className="px-2 text-lg font-bold text-stone-50">
+                  {project.title}
+                </h3>
+                <p className="px-2 leading-relaxed h-12 text-sm text-stone">
+                  {project.link}
+                </p>
+                <div className="flex gap-2 m-2">
+                  <Button variant="outline">
+                    <Link
+                      href={`/projects/${createSlug(project.title)}`}
+                      target="_blank"
+                      rel="noopen"
+                    >
+                      View Project
+                    </Link>
+                  </Button>
+                  {user && (
+                    <>
+                      <EditProjectButton
+                        projectId={project.id}
+                        slug={createSlug(project.title)}
+                      />
+                      <DeleteProjectButton projectId={project.id} />
+                    </>
+                  )}
+                </div>
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+    );
+  } catch (error) {
+    console.error("Error fetching projects:", error);
+    return (
+      <div className="flex flex-col flex-wrap w-full items-center justify-center bg-stone-50 font-sans dark:bg-black my-4">
+        <p className="text-stone-700 dark:text-stone-300">
+          Error loading projects. Please try again later.
+        </p>
+        <p className="text-sm text-stone-500 dark:text-stone-400 mt-2">
+          {error.message}
+        </p>
       </div>
     );
   }
