@@ -1,11 +1,16 @@
 import Link from "next/link";
 import { Card, CardContent, CardFooter, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { fetchProjects } from "@/lib/db";
 
 export default async function ProjectPreviewCard({ count = 3 }) {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/projects`);
-  const response = await res.json();
-  const projects = response.data || response.projects || [];
+  let projects = [];
+  try {
+    projects = await fetchProjects();
+  } catch (error) {
+    console.error("Error fetching projects:", error);
+    projects = [];
+  }
 
   return (
     <div className="flex flex-row w-full justify-center flex-wrap items-center">
@@ -23,7 +28,7 @@ export default async function ProjectPreviewCard({ count = 3 }) {
           </CardContent>
 
           <CardFooter className="flex flex-col items-center">
-            <p className="text-gray-600 mb-4 text-center">{project.desc}</p>
+            <p className="text-gray-600 mb-4 text-center">{project.description}</p>
             <Link href={project.link} className="text-blue-500 hover:underline">
               Learn More
             </Link>

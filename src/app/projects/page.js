@@ -2,7 +2,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
 import { createSlug } from "@/lib/utils";
 import { fetchProjects } from "@/lib/db";
 import { auth0 } from "@/lib/auth0";
@@ -35,7 +34,7 @@ export default async function AllPojects() {
           return (
             <Card
               key={index}
-              className="flex flex-row flex-1 m-4 p-4 gap-2 hover:scale-105 transition-transform bg-stone-700"
+              className="flex flex-col sm:flex-row w-full max-w-lg m-2 sm:m-4 p-3 sm:p-4 gap-2 hover:scale-105 transition-transform bg-stone-700"
             >
               {project.img ? (
                 <Image
@@ -43,19 +42,21 @@ export default async function AllPojects() {
                   height={300}
                   src={project.img}
                   alt={project.title}
-                  className="h-[300px] w-[300px] object-contain"
+                  className="h-[200px] w-full sm:h-[300px] sm:w-[300px] object-contain"
                 />
               ) : (
-                <Skeleton className="h-[300px] w-[300] rounded self-center" />
+                <div className="h-[200px] w-full sm:h-[300px] sm:w-[300px] bg-stone-600 rounded flex items-center justify-center">
+                  <span className="text-stone-400 text-sm">No Image</span>
+                </div>
               )}
               <div className="flex flex-col justify-between">
-                <h3 className="px-2 text-lg font-bold text-stone-50">
+                <h3 className="px-2 text-base sm:text-lg font-bold text-stone-50">
                   {project.title}
                 </h3>
-                <p className="px-2 leading-relaxed h-12 text-sm text-stone">
+                <p className="px-2 leading-relaxed h-auto sm:h-12 text-sm text-stone">
                   {project.link}
                 </p>
-                <div className="flex gap-2 m-2">
+                <div className="flex flex-wrap gap-2 m-2">
                   <Button variant="outline">
                     <Link
                       href={`/projects/${createSlug(project.title)}`}
