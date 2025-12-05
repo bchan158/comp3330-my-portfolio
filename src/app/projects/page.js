@@ -8,6 +8,9 @@ import { auth0 } from "@/lib/auth0";
 import EditProjectButton from "@/components/EditProjectButton";
 import DeleteProjectButton from "@/components/DeleteProjectButton";
 
+// Force dynamic rendering since we use cookies for authentication
+export const dynamic = "force-dynamic";
+
 export default async function AllPojects() {
   try {
     const session = await auth0.getSession();
