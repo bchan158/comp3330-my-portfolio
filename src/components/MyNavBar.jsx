@@ -28,7 +28,7 @@ export default async function MyNavBar() {
             <NavigationMenuTrigger>Resume</NavigationMenuTrigger>
             <NavigationMenuContent>
               <NavigationMenuLink asChild>
-                <Link href="/resume/pdf">PDF</Link>
+                <a href="/resume.pdf" target="_blank" rel="noopener noreferrer">PDF</a>
               </NavigationMenuLink>
             </NavigationMenuContent>
           </NavigationMenuItem>
@@ -45,9 +45,9 @@ export default async function MyNavBar() {
           <NavigationMenuItem>
             <NavigationMenuLink asChild>
               {user ? (
-                <Link href="/api/auth/logout">Log Out</Link>
+                <a href="/api/auth/logout">Log Out</a>
               ) : (
-                <Link href="/api/auth/login">Log In</Link>
+                <a href="/api/auth/login">Log In</a>
               )}
             </NavigationMenuLink>
           </NavigationMenuItem>
