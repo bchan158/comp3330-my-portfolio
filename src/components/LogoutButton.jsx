@@ -7,7 +7,7 @@ export default function LogoutButton() {
   return (
     <Button asChild variant="outline">
       {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-      <a href="/api/auth/logout">Log Out</a>
+      <a href="/auth/logout">Log Out</a>
     </Button>
   );
 }
