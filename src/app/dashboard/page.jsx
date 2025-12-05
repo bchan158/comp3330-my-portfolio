@@ -1,16 +1,20 @@
 "use client";
 import { useEffect } from "react";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useUser } from "@auth0/nextjs-auth0/client";
 import { toast } from "sonner";
 import HeroEditorForm from "@/components/hero-editor-form";
 
 export default function DashboardPage() {
   const { user, error, isLoading } = useUser();
+  const router = useRouter();
+
   useEffect(() => {
-    if (error) toast.error(error.message);
-  }, [error]);
-  if (error) redirect("/auth/login");
+    if (error) {
+      toast.error(error.message);
+      router.push("/api/auth/login");
+    }
+  }, [error, router]);
 
   return (
     <div className="flex flex-col min-h-screen items-center bg-zinc-50 dark:bg-black">

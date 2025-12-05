@@ -56,7 +56,7 @@ export default async function AllPojects() {
                 <p className="px-2 leading-relaxed h-auto sm:h-12 text-sm text-stone">
                   {project.link}
                 </p>
-                <div className="flex flex-wrap gap-2 m-2">
+                <div className="flex flex-col gap-2 m-2">
                   <Button variant="outline">
                     <Link
                       href={`/projects/${createSlug(project.title)}`}
@@ -67,13 +67,13 @@ export default async function AllPojects() {
                     </Link>
                   </Button>
                   {user && (
-                    <>
+                    <div className="flex flex-wrap gap-2">
                       <EditProjectButton
                         projectId={project.id}
                         slug={createSlug(project.title)}
                       />
                       <DeleteProjectButton projectId={project.id} />
-                    </>
+                    </div>
                   )}
                 </div>
               </div>
