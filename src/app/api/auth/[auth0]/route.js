@@ -16,7 +16,7 @@ export async function GET(request, { params }) {
   } catch (error) {
     console.error("Auth route error:", error);
     return NextResponse.json(
-      { error: "Authentication error" },
+      { error: "Authentication error", message: error.message },
       { status: 500 }
     );
   }
@@ -30,7 +30,7 @@ export async function POST(request, { params }) {
   } catch (error) {
     console.error("Auth route error:", error);
     return NextResponse.json(
-      { error: "Authentication error" },
+      { error: "Authentication error", message: error.message },
       { status: 500 }
     );
   }
