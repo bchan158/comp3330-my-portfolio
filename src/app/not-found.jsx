@@ -22,7 +22,7 @@ export default function NotFound({ message }) {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            Don't worry, it happens to the best of us. Let's get you back on
+            Don&apos;t worry, it happens to the best of us. Let&apos;s get you back on
             track.
           </p>
         </CardContent>
