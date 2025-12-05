@@ -3,15 +3,18 @@ import MyHero from "@/components/MyHero";
 import ProjectPreviewCard from "@/components/ProjectPreviewCard";
 import GitHubCalendar from "@/components/github-calendar";
 import { auth0 } from "@/lib/auth0";
-import LoginButton from "@/components/LoginButton";
-import LogoutButton from "@/components/LogoutButton";
-import Profile from "@/components/Profile";
 
 export const revalidate = 0;
 
 export default async function Home() {
-  const session = await auth0.getSession();
-  const user = session?.user;
+  // Safely get session, handle errors gracefully
+  let session = null;
+  try {
+    session = await auth0.getSession();
+  } catch (error) {
+    console.error("Error getting session:", error);
+    // Continue without session
+  }
 
   return (
     <>
