@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useUser } from "@auth0/nextjs-auth0/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -23,9 +24,11 @@ export default function Profile() {
       <CardContent>
         <div className="space-y-2">
           {user.picture && (
-            <img
+            <Image
               src={user.picture}
               alt={user.name || "Profile"}
+              width={64}
+              height={64}
               className="w-16 h-16 rounded-full"
             />
           )}

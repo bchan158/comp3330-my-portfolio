@@ -45,8 +45,10 @@ export default async function MyNavBar() {
           <NavigationMenuItem>
             <NavigationMenuLink asChild>
               {user ? (
+                /* eslint-disable-next-line @next/next/no-html-link-for-pages */
                 <a href="/api/auth/logout">Log Out</a>
               ) : (
+                /* eslint-disable-next-line @next/next/no-html-link-for-pages */
                 <a href="/api/auth/login">Log In</a>
               )}
             </NavigationMenuLink>
