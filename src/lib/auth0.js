@@ -44,7 +44,7 @@ export const auth0 = new Proxy(
             throw new Error("Auth0 not configured");
           };
         }
-        if (prop === "middleware") {
+        if (prop === "middleware" || prop === "handleAuth") {
           return async (request) => {
             const { NextResponse } = await import("next/server");
             return NextResponse.next();

@@ -10,8 +10,8 @@ import { NextResponse } from "next/server";
 // These handlers delegate to the Auth0Client middleware
 export async function GET(request, { params }) {
   try {
-    // Delegate to the auth0 middleware which handles all auth routes
-    const response = await auth0.middleware(request);
+    // Delegate to the auth0 handleAuth which handles all auth routes
+    const response = await auth0.handleAuth(request);
     return response;
   } catch (error) {
     console.error("Auth route error:", error);
@@ -24,8 +24,8 @@ export async function GET(request, { params }) {
 
 export async function POST(request, { params }) {
   try {
-    // Delegate to the auth0 middleware which handles all auth routes
-    const response = await auth0.middleware(request);
+    // Delegate to the auth0 handleAuth which handles all auth routes
+    const response = await auth0.handleAuth(request);
     return response;
   } catch (error) {
     console.error("Auth route error:", error);
