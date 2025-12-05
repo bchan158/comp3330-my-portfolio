@@ -3,7 +3,7 @@ import { Auth0Client } from "@auth0/nextjs-auth0/server";
 
 // Get required Auth0 configuration from environment variables
 // Ensure domain is always a string to prevent "startsWith" errors
-const domain = process.env.AUTH0_DOMAIN || "";
+const domain = process.env.AUTH0_DOMAIN || process.env.AUTH0_ISSUER_BASE_URL || "";
 const appBaseUrl =
   process.env.APP_BASE_URL ||
   process.env.AUTH0_BASE_URL ||
