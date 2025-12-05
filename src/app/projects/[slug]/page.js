@@ -9,6 +9,8 @@ import EditProjectButton from "@/components/EditProjectButton";
 import DeleteProjectButton from "@/components/DeleteProjectButton";
 import { Badge } from "@/components/ui/badge";
 
+export const dynamic = "force-dynamic";
+
 export default async function ProjectDetailPage({ params }) {
   const { slug } = await params;
   const session = await auth0.getSession();

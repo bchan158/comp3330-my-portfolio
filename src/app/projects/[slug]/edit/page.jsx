@@ -5,6 +5,8 @@ import { notFound } from "next/navigation";
 import { auth0 } from "@/lib/auth0";
 import { redirect } from "next/navigation";
 
+export const dynamic = "force-dynamic";
+
 export default async function EditProjectPage({ params }) {
   const { slug } = await params;
   

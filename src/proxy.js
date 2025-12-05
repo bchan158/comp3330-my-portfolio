@@ -1,7 +1,7 @@
 import { auth0 } from "./lib/auth0";
 import { NextResponse } from "next/server";
 
-export default async function middleware(request) {
+export default async function proxy(request) {
   // Check if AUTH0_DOMAIN is configured
   if (!process.env.AUTH0_DOMAIN) {
     // If Auth0 is not configured, skip the middleware
