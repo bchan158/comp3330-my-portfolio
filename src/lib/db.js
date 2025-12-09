@@ -1,4 +1,5 @@
 import { neon } from "@neondatabase/serverless";
+import { createSlug } from "./utils";
 
 // Initialize database connection with proper error handling
 const dbUrl = process.env.NEON_DB_URL;
@@ -25,6 +26,18 @@ function mapHeroRow(row) {
     updatedAt: row.updatedAt,
   };
 }
+
+// Shared helpers
+const safePage = (page = 1) => {
+  const parsed = Number(page);
+  return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 1;
+};
+
+const safePageSize = (pageSize = 10, max = 50) => {
+  const parsed = Number(pageSize);
+  if (!Number.isFinite(parsed) || parsed <= 0) return 10;
+  return Math.min(Math.floor(parsed), max);
+};
 
 async function seedHeroTable() {
   if (!sql) return;
@@ -152,8 +165,9 @@ export async function ensureProjectsTable() {
         title text not null,
         description text not null,
         image text not null,
+        img text default '',
         link text not null,
-        keywords text[] default '{}',
+        keywords jsonb default '[]',
         created_at timestamptz not null default now(),
         updated_at timestamptz not null default now()
       );
@@ -183,7 +197,18 @@ export async function ensureProjectsTable() {
 
     if (keywordsColumnCheck.length === 0) {
       // Column doesn't exist, add it
-      await sql`alter table projects add column keywords text[] default '{}';`;
+      await sql`alter table projects add column keywords jsonb default '[]';`;
+    }
+
+    // Check if 'img' column exists (legacy support)
+    const imgColumnCheck = await sql`
+      select column_name 
+      from information_schema.columns 
+      where table_name = 'projects' and column_name = 'img';
+    `;
+
+    if (imgColumnCheck.length === 0) {
+      await sql`alter table projects add column img text default '';`;
     }
   } catch (error) {
     console.error("Error ensuring projects table:", error);
@@ -196,8 +221,8 @@ function mapProjectRow(row) {
     id: row.id,
     title: row.title,
     description: row.description,
-    image: row.image,
-    img: row.image, // alias for compatibility
+    image: row.img || row.image,
+    img: row.img || row.image, // alias for compatibility
     link: row.link,
     keywords: row.keywords || [],
     createdAt: row.createdAt,
@@ -210,7 +235,7 @@ export async function fetchProjects() {
   try {
     await ensureProjectsTable();
     const rows = await sql`
-      select id, title, description, image, link, keywords,
+      select id, title, description, image, img, link, keywords,
              created_at as "createdAt", updated_at as "updatedAt"
       from projects
       order by created_at desc;
@@ -227,7 +252,7 @@ export async function getProjectById(id) {
   try {
     await ensureProjectsTable();
     const [row] = await sql`
-      select id, title, description, image, link, keywords,
+      select id, title, description, image, img, link, keywords,
              created_at as "createdAt", updated_at as "updatedAt"
       from projects
       where id = ${id};
@@ -253,9 +278,11 @@ export async function insertProject({
     await ensureProjectsTable();
     const id = crypto.randomUUID();
     const [row] = await sql`
-      insert into projects (id, title, description, image, link, keywords)
-      values (${id}, ${title}, ${description}, ${image}, ${link}, ${keywords}::text[])
-      returning id, title, description, image, link, keywords,
+      insert into projects (id, title, description, image, img, link, keywords)
+      values (${id}, ${title}, ${description}, ${image}, ${image}, ${link}, ${JSON.stringify(
+        keywords
+      )}::jsonb)
+      returning id, title, description, image, img, link, keywords,
                 created_at as "createdAt", updated_at as "updatedAt";
     `;
     return mapProjectRow(row);
@@ -281,12 +308,15 @@ export async function updateProject(id, updates = {}) {
     }
     if (updates.image !== undefined) {
       setParts.push(sql`image = ${updates.image}`);
+      setParts.push(sql`img = ${updates.image}`);
     }
     if (updates.link !== undefined) {
       setParts.push(sql`link = ${updates.link}`);
     }
     if (updates.keywords !== undefined) {
-      setParts.push(sql`keywords = ${updates.keywords}::text[]`);
+      setParts.push(
+        sql`keywords = ${JSON.stringify(updates.keywords)}::jsonb`
+      );
     }
 
     if (setParts.length === 0) {
@@ -331,5 +361,293 @@ export async function deleteProject(id) {
   } catch (error) {
     console.error("Error deleting project:", error);
     throw error;
+  }
+}
+
+// Blog post functions
+function mapPostRow(row) {
+  return {
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    preview: row.preview,
+    content: row.content,
+    author: row.author,
+    publishedAt: row.publishedAt,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
+}
+
+export async function ensurePostsTable() {
+  if (!sql) return;
+  try {
+    await sql`
+      create table if not exists blog_posts (
+        id uuid primary key default gen_random_uuid(),
+        slug text unique not null,
+        title text not null,
+        preview text not null,
+        content text not null,
+        author text,
+        published_at timestamptz default now(),
+        created_at timestamptz not null default now(),
+        updated_at timestamptz not null default now()
+      );
+    `;
+    await sql`
+      create index if not exists idx_blog_posts_published_at on blog_posts (published_at desc);
+    `;
+  } catch (error) {
+    console.error("Error ensuring blog_posts table:", error);
+    throw error;
+  }
+}
+
+export async function createPost({
+  title,
+  preview,
+  content,
+  author,
+  slug,
+  publishedAt,
+}) {
+  if (!sql) throw new Error("Database not configured");
+  try {
+    await ensurePostsTable();
+    const baseSlug = createSlug(slug || title || crypto.randomUUID());
+    let candidate = baseSlug;
+    let attempt = 1;
+    while (attempt < 6) {
+      const existing =
+        await sql`select slug from blog_posts where slug = ${candidate} limit 1`;
+      if (existing.length === 0) break;
+      candidate = `${baseSlug}-${attempt}`;
+      attempt += 1;
+    }
+    const [row] = await sql`
+      insert into blog_posts (slug, title, preview, content, author, published_at)
+      values (${candidate}, ${title}, ${preview}, ${content}, ${
+      author || ""
+    }, ${publishedAt || sql`now()`})
+      returning id, slug, title, preview, content, author,
+                published_at as "publishedAt",
+                created_at as "createdAt",
+                updated_at as "updatedAt";
+    `;
+    return mapPostRow(row);
+  } catch (error) {
+    console.error("Error creating post:", error);
+    throw error;
+  }
+}
+
+export async function fetchPostsPaginated({ page = 1, pageSize = 5 } = {}) {
+  if (!sql) return { items: [], total: 0, page: 1, pageSize };
+  try {
+    await ensurePostsTable();
+    const currentPage = safePage(page);
+    const size = safePageSize(pageSize, 25);
+    const offset = (currentPage - 1) * size;
+    const [{ count }] =
+      await sql`select count(*)::int as count from blog_posts`;
+    const rows = await sql`
+      select id, slug, title, preview, content, author,
+             published_at as "publishedAt",
+             created_at as "createdAt",
+             updated_at as "updatedAt"
+      from blog_posts
+      order by published_at desc
+      limit ${size} offset ${offset};
+    `;
+    return {
+      items: rows.map(mapPostRow),
+      total: Number(count) || 0,
+      page: currentPage,
+      pageSize: size,
+    };
+  } catch (error) {
+    console.error("Error fetching paginated posts:", error);
+    return { items: [], total: 0, page: 1, pageSize };
+  }
+}
+
+export async function getPostBySlug(slug) {
+  if (!sql) return null;
+  try {
+    await ensurePostsTable();
+    const [row] = await sql`
+      select id, slug, title, preview, content, author,
+             published_at as "publishedAt",
+             created_at as "createdAt",
+             updated_at as "updatedAt"
+      from blog_posts
+      where slug = ${slug}
+      limit 1;
+    `;
+    return row ? mapPostRow(row) : null;
+  } catch (error) {
+    console.error("Error fetching post by slug:", error);
+    return null;
+  }
+}
+
+// Booking functions
+function mapBookingRow(row) {
+  return {
+    id: row.id,
+    name: row.name,
+    email: row.email,
+    slot: row.slot,
+    notes: row.notes,
+    status: row.status,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt,
+  };
+}
+
+export async function ensureBookingsTable() {
+  if (!sql) return;
+  try {
+    await sql`
+      create table if not exists bookings (
+        id uuid primary key default gen_random_uuid(),
+        name text not null,
+        email text not null,
+        slot timestamptz not null,
+        notes text,
+        status text not null default 'pending',
+        created_at timestamptz not null default now(),
+        updated_at timestamptz not null default now(),
+        unique(slot)
+      );
+    `;
+    await sql`
+      create index if not exists idx_bookings_slot on bookings (slot desc);
+    `;
+  } catch (error) {
+    console.error("Error ensuring bookings table:", error);
+    throw error;
+  }
+}
+
+export async function createBooking({ name, email, slot, notes }) {
+  if (!sql) throw new Error("Database not configured");
+  try {
+    await ensureBookingsTable();
+    const slotDate = new Date(slot);
+    if (Number.isNaN(slotDate.getTime())) {
+      throw new Error("Invalid slot date");
+    }
+    const existing = await sql`
+      select id from bookings
+      where slot = ${slotDate.toISOString()}
+      limit 1;
+    `;
+    if (existing.length > 0) {
+      throw new Error("Slot already booked");
+    }
+    const [row] = await sql`
+      insert into bookings (name, email, slot, notes)
+      values (${name}, ${email}, ${slotDate.toISOString()}, ${notes || ""})
+      returning id, name, email, slot, notes, status,
+                created_at as "createdAt", updated_at as "updatedAt";
+    `;
+    return mapBookingRow(row);
+  } catch (error) {
+    console.error("Error creating booking:", error);
+    throw error;
+  }
+}
+
+export async function listBookings({ upcomingOnly = true } = {}) {
+  if (!sql) return [];
+  try {
+    await ensureBookingsTable();
+    const filter = upcomingOnly ? sql`where slot >= now()` : sql``;
+    const rows = await sql`
+      select id, name, email, slot, notes, status,
+             created_at as "createdAt", updated_at as "updatedAt"
+      from bookings
+      ${filter}
+      order by slot asc;
+    `;
+    return rows.map(mapBookingRow);
+  } catch (error) {
+    console.error("Error listing bookings:", error);
+    return [];
+  }
+}
+
+// Route visits analytics
+function mapVisitRow(row) {
+  return {
+    path: row.path,
+    visitedAt: row.visitedAt,
+    count: row.count,
+  };
+}
+
+export async function ensureRouteVisitsTable() {
+  if (!sql) return;
+  try {
+    await sql`
+      create table if not exists route_visits (
+        id uuid primary key default gen_random_uuid(),
+        path text not null,
+        visited_at timestamptz not null default now()
+      );
+    `;
+    await sql`
+      create index if not exists idx_route_visits_path on route_visits (path);
+    `;
+    await sql`
+      create index if not exists idx_route_visits_visited_at on route_visits (visited_at desc);
+    `;
+  } catch (error) {
+    console.error("Error ensuring route_visits table:", error);
+    throw error;
+  }
+}
+
+export async function recordRouteVisit(path) {
+  if (!sql) return null;
+  try {
+    await ensureRouteVisitsTable();
+    await sql`
+      insert into route_visits (path)
+      values (${path});
+    `;
+  } catch (error) {
+    console.error("Error recording route visit:", error);
+  }
+}
+
+export async function getRouteStats() {
+  if (!sql) return { totals: [], recent: [] };
+  try {
+    await ensureRouteVisitsTable();
+    const totals = await sql`
+      select path, count(*)::int as count
+      from route_visits
+      group by path
+      order by count desc;
+    `;
+    const recent = await sql`
+      select path, visited_at as "visitedAt"
+      from route_visits
+      order by visited_at desc
+      limit 25;
+    `;
+    return {
+      totals: totals.map((row) => ({ path: row.path, count: row.count })),
+      recent: recent.map((row) => ({
+        path: row.path,
+        visitedAt: row.visitedAt,
+      })),
+    };
+  } catch (error) {
+    console.error("Error getting route stats:", error);
+    return { totals: [], recent: [] };
   }
 }

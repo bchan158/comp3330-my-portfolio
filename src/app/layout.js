@@ -3,6 +3,7 @@ import "./globals.css";
 import MyNavBar from "@/components/MyNavBar";
 import { Toaster } from "@/components/ui/sonner";
 import { Auth0Provider } from "@auth0/nextjs-auth0/client";
+import RouteTracker from "@/components/RouteTracker";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,6 +28,7 @@ export default function RootLayout({ children }) {
       >
         <Auth0Provider>
           <MyNavBar />
+          <RouteTracker />
           {children}
           <Toaster />
         </Auth0Provider>

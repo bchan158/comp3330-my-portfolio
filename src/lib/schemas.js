@@ -16,3 +16,9 @@ export const contactFormSchema = z.object({
     .min(10, "Message must be at least 10 characters"),
 });
 
+export const bookingRequestSchema = z.object({
+  name: z.string().min(2, "Name is required"),
+  email: z.string().email("Valid email required"),
+  slot: z.string().min(1, "Time slot required"),
+  notes: z.string().optional(),
+});

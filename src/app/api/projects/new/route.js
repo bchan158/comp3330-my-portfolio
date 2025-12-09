@@ -13,7 +13,10 @@ const projectSchema = z.object({
 
 export async function POST(request) {
   try {
-    await auth0.requireSession();
+    const session = await auth0.getSession();
+    if (!session) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
 
     // Try to parse as JSON first, fallback to FormData
     let body;

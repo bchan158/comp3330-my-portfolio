@@ -40,10 +40,10 @@ export default function NewPage() {
   const form = useForm({
     resolver: zodResolver(newProjectSchema),
     defaultValues: {
-      title: "Write your project title here...",
-      description: "Write your project description here...",
+      title: "",
+      description: "",
       img: "https://placehold.co/300.png",
-      link: "https://your-project-link.com",
+      link: "",
       keywords: [],
     },
   });

@@ -25,10 +25,22 @@ export default async function MyNavBar() {
             </NavigationMenuLink>
           </NavigationMenuItem>
           <NavigationMenuItem>
+            <NavigationMenuLink asChild>
+              <Link href="/blog">Blog</Link>
+            </NavigationMenuLink>
+          </NavigationMenuItem>
+          <NavigationMenuItem>
+            <NavigationMenuLink asChild>
+              <Link href="/calendar">Calendar</Link>
+            </NavigationMenuLink>
+          </NavigationMenuItem>
+          <NavigationMenuItem>
             <NavigationMenuTrigger>Resume</NavigationMenuTrigger>
             <NavigationMenuContent>
               <NavigationMenuLink asChild>
-                <a href="/resume.pdf" target="_blank" rel="noopener noreferrer">PDF</a>
+                <a href="/resume.pdf" target="_blank" rel="noopener noreferrer">
+                  PDF
+                </a>
               </NavigationMenuLink>
             </NavigationMenuContent>
           </NavigationMenuItem>
@@ -37,6 +49,13 @@ export default async function MyNavBar() {
               <Link href="/projects">Projects</Link>
             </NavigationMenuLink>
           </NavigationMenuItem>
+          {user && (
+            <NavigationMenuItem>
+              <NavigationMenuLink asChild>
+                <Link href="/dashboard">Dashboard</Link>
+              </NavigationMenuLink>
+            </NavigationMenuItem>
+          )}
           <NavigationMenuItem>
             <NavigationMenuLink asChild>
               <Link href="/contact">Contact</Link>
